@@ -1,0 +1,86 @@
+name: Singmaster search
+on:
+  push:
+    branches: [search]
+permissions:
+  contents: read
+jobs:
+  selftest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - run: python singsearch.py selftest --random 400 --central 200 --lind 4
+
+  central:
+    needs: selftest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - run: nproc && python singsearch.py central --start 2 --stop 150000 --job ${{ matrix.job }} --jobs 16 --workers 4 --minutes 72 --out central-${{ matrix.job }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: central-${{ matrix.job }}
+          path: central-${{ matrix.job }}.json
+
+  lind:
+    needs: selftest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: small
+            cmd: for i in 3 4 5; do python singsearch.py lind --i $i --job 0 --jobs 1 --workers 4 --minutes 20 --out lind-$i.json; done
+          - name: i6
+            cmd: python singsearch.py lind --i 6 --job 0 --jobs 1 --workers 4 --minutes 72 --out lind-6.json
+          - name: i7a
+            cmd: python singsearch.py lind --i 7 --job 0 --jobs 2 --workers 4 --dps 100 --minutes 72 --out lind-7a.json
+          - name: i7b
+            cmd: python singsearch.py lind --i 7 --job 1 --jobs 2 --workers 4 --dps 100 --minutes 72 --out lind-7b.json
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - run: ${{ matrix.cmd }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lind-${{ matrix.name }}
+          path: lind-*.json
+
+  merge:
+    needs: [central, lind]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+          merge-multiple: true
+      - run: python singsearch.py merge results/*.json --out report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: |
+            report.json
+            results/*.json
