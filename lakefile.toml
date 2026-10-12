@@ -1,0 +1,23 @@
+name = "singmaster"
+version = "0.1.0"
+defaultTargets = ["Singmaster", "Audit"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+relaxedAutoImplicit = false
+
+# The same Lean and Mathlib release as the "Stable" project on live.lean-lang.org,
+# where these files were checked.
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.34.0"
+
+# Definitions and proofs. Nothing here uses `sorry`.
+[[lean_lib]]
+name = "Singmaster"
+
+# Fails the build if a listed result depends on a nonstandard axiom.
+[[lean_lib]]
+name = "Audit"

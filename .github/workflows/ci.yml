@@ -1,0 +1,22 @@
+name: Check formalization
+on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: "false"
+          build: "false"
+          use-github-cache: "false"
+          use-mathlib-cache: "true"
+      # Builds `Singmaster` and `Audit`. `Audit` fails if a listed result depends on a
+      # nonstandard axiom.
+      - name: Build
+        run: lake build --wfail
