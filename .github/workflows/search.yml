@@ -22,14 +22,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        job: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install gmpy2 mpmath
-      - run: nproc && python singsearch.py central --start 2 --stop 400000 --job ${{ matrix.job }} --jobs 15 --workers 4 --minutes 300 --out central-${{ matrix.job }}.json
+      - run: nproc && python singsearch.py central --start 2 --stop 400000 --job ${{ matrix.job }} --jobs 13 --workers 4 --minutes 300 --out central-${{ matrix.job }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: central-${{ matrix.job }}
