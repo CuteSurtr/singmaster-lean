@@ -30,12 +30,15 @@ the results into `report.json`.
 | 40166727006 (2026-10-25) | every m <= 150,001, scattered m up to 205,981 | i = 7 complete (only the two known positions); i = 8 for k <= 3,383,345; i = 9 for k <= 22,931,135 |
 
 | 40186682964 (2026-10-25) | the m in 150002..212000 that the previous run missed, so every m <= 212,000 | i = 8 to k = 3,500,970 and i = 9 to k = 22,989,519 only (see below) |
+| 40209681608 (2026-10-25) | none | i = 8 and i = 9 complete with `gap_kill` (only the two known positions each) |
 
-No run has found a representation beyond the known ones.
+No run has found a representation beyond the known ones. Together the runs show that every
+C(2m, m) with 2 <= m <= 212,000 appears exactly three times, and that the Lind–Singmaster numbers
+for i = 3, ..., 9 (the last has 21,386,570 digits) appear exactly six times.
 
 For k between N / (2 phi) and K the Lind searches stalled: the candidates n just above N, below
 the next prime, survive the window filter, and the primes dividing t that would remove them lie
 just below N - k, while the filter tries those primes from the top down and gives up after 400.
 Each survivor then cost an exact binomial with millions of digits. `gap_kill` now removes them
 directly: a prime p > k dividing t with max(k, n_hi / 2) < p <= n_lo - k has no multiple in any
-window. The current workflow finishes i = 8 and i = 9 with this filter.
+window. Run 40209681608 finished i = 8 and i = 9 with this filter in about two minutes.
