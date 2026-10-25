@@ -239,16 +239,39 @@ _SPLIT_CACHE = {}
 
 
 def split_primes(plist, elist):
-    """(primes with v_p(t) = 0 ascending, primes with v_p(t) >= 1 descending), cached per list."""
+    """(primes with v_p(t) = 0 ascending, primes with v_p(t) >= 1 descending, the same
+    ascending), cached per list."""
     key = id(plist)
     hit = _SPLIT_CACHE.get(key)
     if hit is not None and hit[0] is plist:
-        return hit[1], hit[2]
+        return hit[1], hit[2], hit[3]
     p0 = [p for p, e in zip(plist, elist) if e == 0]
-    p1 = [p for p, e in zip(plist, elist) if e >= 1][::-1]
+    p1_asc = [p for p, e in zip(plist, elist) if e >= 1]
+    p1 = p1_asc[::-1]
     _SPLIT_CACHE.clear()
-    _SPLIT_CACHE[key] = (plist, p0, p1)
-    return p0, p1
+    _SPLIT_CACHE[key] = (plist, p0, p1, p1_asc)
+    return p0, p1, p1_asc
+
+
+def gap_kill(J, A, k, p1_asc):
+    """Drop every interval of candidates n whose windows (n - k, n] all miss the multiples of
+    some prime p > k that divides t. That happens when p > max(n_hi, k) (no multiple up to
+    n_hi), or when max(k, n_hi / 2) < p <= n_lo - k (p lies below every window and 2p above).
+    Typical use: for k between N / (2 phi) and K, the candidates just above N survive the other
+    filters, and the primes dividing C(N, K) just below N - k remove them."""
+    if not p1_asc:
+        return J
+    top = p1_asc[-1]
+    out = []
+    for lo, hi in J:
+        n_lo, n_hi = A + lo, A + hi
+        if top > max(n_hi, k):
+            continue
+        i = bisect.bisect_right(p1_asc, max(k, n_hi // 2))
+        if i < len(p1_asc) and p1_asc[i] <= n_lo - k:
+            continue
+        out.append((lo, hi))
+    return out
 
 
 def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64,
@@ -264,7 +287,7 @@ def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64,
     # The most selective primes p > k: those dividing t, largest first (a window of length k
     # contains a multiple of p for about a fraction k/p of the candidates), and those not
     # dividing t, smallest first (a window avoids every multiple for about 1 - k/p of them).
-    p0, p1 = split_primes(plist, elist)
+    p0, p1, p1_asc = split_primes(plist, elist)
     i0 = bisect.bisect_right(p0, k)
     i1 = 0
     used = tests = 0
@@ -273,6 +296,7 @@ def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64,
     while J and used < max_primes:
         if not pw_done and used >= pw_after and B is not None:
             J, tests = window_filter(J, A, k, p0, B)
+            J = gap_kill(J, A, k, p1_asc)
             pw_done = True
             continue
         have1 = i1 < len(p1) and p1[i1] > k
@@ -290,6 +314,7 @@ def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64,
         used += 1
     if J and not pw_done and B is not None:
         J, tests = window_filter(J, A, k, p0, B)
+    J = gap_kill(J, A, k, p1_asc)
     if not J:
         return [], used, tests, 0
     count = int(sum(h - l + 1 for l, h in J))
