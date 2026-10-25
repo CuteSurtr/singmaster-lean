@@ -27,3 +27,6 @@ elab "#assert_standard_axioms " ids:ident* : command => do
   Singmaster.choose_fib_eq
   Singmaster.six_le_ncard_solutions_fib
   Singmaster.singmaster.variants.infinite_six_le_ncard
+  Singmaster.singmaster.variants.ncard_le_two_mul_log
+  Singmaster.exists_centralBinom_of_odd_ncard
+  Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven

@@ -18,6 +18,9 @@ conjecture bounds there.
 | `Singmaster.choose_fib_eq` | $\binom{F_{2i+2}F_{2i+3}}{F_{2i}F_{2i+3}} = \binom{F_{2i+2}F_{2i+3}-1}{F_{2i}F_{2i+3}+1}$ for every $i$ (Lind 1968, Singmaster 1975). |
 | `Singmaster.six_le_ncard_solutions_fib` | For $i \ge 1$ that common value appears at least $6$ times. |
 | `Singmaster.singmaster.variants.infinite_six_le_ncard` | Infinitely many integers appear at least $6$ times. |
+| `Singmaster.singmaster.variants.ncard_le_two_mul_log` | $N(t) \le 2 \log_2 t$ for every $t$ (Singmaster 1971). |
+| `Singmaster.exists_centralBinom_of_odd_ncard` | If $N(t)$ is odd, then $t = \binom{2m}{m}$ for some $m \ge 1$. |
+| `Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven` | In particular, a number that appears exactly $5$ or $7$ times is a central binomial coefficient. |
 
 Proof outline for $N(3003) = 8$: rows of Pascal's triangle are unimodal, so an entry with
 $2 \le k \le n - 2$ is at least $\binom{n}{2}$. Then $\binom{n}{k} = 3003$ forces $n \le 78$, and the kernel
@@ -34,6 +37,8 @@ $n(k+1) = (n-k)(n-k-1)$, which is equivalent to $\binom{n}{k} = \binom{n-1}{k+1}
 | `Singmaster/Basic.lean` | The definition, unimodality of rows, and finiteness of `solutions t`. |
 | `Singmaster/N3003.lean` | $N(3003) = 8$. |
 | `Singmaster/Fibonacci.lean` | The Lind–Singmaster family. |
+| `Singmaster/LogBound.lean` | Singmaster's bound $N(t) \le 2 \log_2 t$. |
+| `Singmaster/Parity.lean` | Odd multiplicities come from central binomial coefficients. |
 | `Audit.lean` | Fails the build if a listed result uses an axiom other than `propext`, `Classical.choice` and `Quot.sound`. |
 
 No file uses `sorry` or `native_decide`.
