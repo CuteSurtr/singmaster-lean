@@ -32,6 +32,8 @@ shows `c = b²` and `s = b (a + b)` with `b² = a b + a² + 1`. The solutions of
   Fibonacci Quart. 6 (1968), 86-93.
 - D. Singmaster, *Repeated binomial coefficients and Fibonacci numbers*,
   Fibonacci Quart. 13 (1975), 295-298.
+- C. A. Tovey, *Multiple occurrences of binomial coefficients*, Fibonacci Quart. 23 (1985),
+  356-358 (Theorem 2).
 -/
 
 open Nat

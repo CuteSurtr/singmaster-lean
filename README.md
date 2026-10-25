@@ -21,6 +21,8 @@ $(n, k)$ with $1 \le k < n$ and $\binom{n}{k} = t$.
 | `Singmaster.six_le_ncard_solutions_fib` | For $i \ge 1$ that common value appears at least $6$ times. |
 | `Singmaster.singmaster.variants.infinite_six_le_ncard` | Infinitely many integers appear at least $6$ times. |
 | `Singmaster.choose_eq_choose_pred_succ_iff_fib` | Conversely, for $1 \le k$ and $k + 2 \le n$, $\binom{n}{k} = \binom{n-1}{k+1}$ only for $n = F_{2i+2}F_{2i+3}$, $k = F_{2i}F_{2i+3}$ (Lind 1968). |
+| `Singmaster.ncard_prime`, `Singmaster.singmaster.variants.infinite_ncard_eq_two` | A prime $p \ge 3$ appears exactly $2$ times, so infinitely many numbers do. |
+| `Singmaster.ncard_choose_prime_two`, `Singmaster.singmaster.variants.infinite_ncard_eq_four` | For a prime $p \ge 5$, $\binom{p}{2}$ appears exactly $4$ times, so infinitely many numbers do. |
 | `Singmaster.singmaster.variants.ncard_le_two_mul_log` | $N(t) \le 2 \log_2 t$ for every $t$ (Singmaster 1971). |
 | `Singmaster.exists_centralBinom_of_odd_ncard` | If $N(t)$ is odd, then $t = \binom{2m}{m}$ for some $m \ge 1$. |
 | `Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven` | In particular, a number that appears exactly $5$ or $7$ times is a central binomial coefficient. |
@@ -72,6 +74,7 @@ multiplicities $5$ and $7$ below $\binom{402}{201}$.
 | `Singmaster/Adjacent.lean` | Lind's theorem: every collision between adjacent rows is in that family. |
 | `Singmaster/LogBound.lean` | Singmaster's bound $N(t) \le 2 \log_2 t$. |
 | `Singmaster/Parity.lean` | Odd multiplicities come from central binomial coefficients. |
+| `Singmaster/Primes.lean` | Numbers that appear exactly twice or four times. |
 | `Singmaster/Window.lean` | The bracket $(n+1-k)^k \le k! \binom{n}{k} \le n^k$ and the prime-window rules. |
 | `Singmaster/Certified.lean` | Column certificates, their soundness, and exact counts from a passing check. |
 | `Singmaster/Collisions.lean` | Exact counts for the known repeated numbers (generated). |
@@ -92,8 +95,8 @@ lake exe cache get && lake build
 ```
 
 The files were also checked on [live.lean-lang.org](https://live.lean-lang.org): `Basic`, `N3003`,
-`Fibonacci` and `LogBound` on 2026-10-12 with v4.34.0, and `Parity`, `Adjacent`, `Window`,
-`Certified`, `Collisions` and `Central` on 2026-10-25 with v4.35.0. Both times there were no errors or warnings,
+`Fibonacci` and `LogBound` on 2026-10-12 with v4.34.0, and `Parity`, `Adjacent`, `Primes`,
+`Window`, `Certified`, `Collisions` and `Central` on 2026-10-25 with v4.35.0. Both times there were no errors or warnings,
 and `#print axioms` reported only `propext`, `Classical.choice` and `Quot.sound`.
 
 ## References
@@ -104,5 +107,6 @@ and `#print axioms` reported only `propext`, `Classical.choice` and `Quot.sound`
   (1968), 86-93.
 - D. Singmaster, *Repeated binomial coefficients and Fibonacci numbers*, Fibonacci Quart. 13 (1975),
   295-298.
+- C. A. Tovey, *Multiple occurrences of binomial coefficients*, Fibonacci Quart. 23 (1985), 356-358.
 - A. Blokhuis, A. Brouwer and B. de Weger, *Binomial collisions and near collisions*, Integers 17
   (2017), A64.

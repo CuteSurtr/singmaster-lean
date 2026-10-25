@@ -35,6 +35,10 @@ elab "#assert_standard_axioms " ids:ident* : command => do
   Singmaster.prime_dvd_choose_iff_window
   Singmaster.central_window
   Singmaster.choose_eq_window
+  Singmaster.ncard_prime
+  Singmaster.ncard_choose_prime_two
+  Singmaster.singmaster.variants.infinite_ncard_eq_two
+  Singmaster.singmaster.variants.infinite_ncard_eq_four
   Singmaster.ncard_eq_of_certOK
   Singmaster.ncard_120
   Singmaster.ncard_210

@@ -5,6 +5,7 @@ import Singmaster.Adjacent
 import Singmaster.LogBound
 import Singmaster.Parity
 import Singmaster.Window
+import Singmaster.Primes
 import Singmaster.Certified
 import Singmaster.Collisions
 import Singmaster.Central
