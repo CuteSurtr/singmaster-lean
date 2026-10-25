@@ -24,7 +24,7 @@ $(n, k)$ with $1 \le k < n$ and $\binom{n}{k} = t$.
 | `Singmaster.ncard_prime`, `Singmaster.singmaster.variants.infinite_ncard_eq_two` | A prime $p \ge 3$ appears exactly $2$ times, so infinitely many numbers do. |
 | `Singmaster.ncard_choose_prime_two`, `Singmaster.singmaster.variants.infinite_ncard_eq_four` | For a prime $p \ge 5$, $\binom{p}{2}$ appears exactly $4$ times, so infinitely many numbers do. |
 | `Singmaster.singmaster.variants.ncard_le_two_mul_log` | $N(t) \le 2 \log_2 t$ for every $t$ (Singmaster 1971). |
-| `Singmaster.exists_centralBinom_of_odd_ncard` | If $N(t)$ is odd, then $t = \binom{2m}{m}$ for some $m \ge 1$. |
+| `Singmaster.odd_ncard_iff` | $N(t)$ is odd if and only if $t = \binom{2m}{m}$ for some $m \ge 1$. |
 | `Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven` | In particular, a number that appears exactly $5$ or $7$ times is a central binomial coefficient. |
 | `Singmaster.ncard_120`, `ncard_210`, `ncard_1540`, `ncard_7140`, `ncard_11628`, `ncard_24310` | Each of $120, 210, 1540, 7140, 11628, 24310$ appears exactly $6$ times. |
 | `Singmaster.ncard_choose_104_39` | $\binom{104}{39} = \binom{103}{40}$, a number with 29 digits, appears exactly $6$ times. |
@@ -73,7 +73,7 @@ multiplicities $5$ and $7$ below $\binom{402}{201}$.
 | `Singmaster/Fibonacci.lean` | The Lind–Singmaster family. |
 | `Singmaster/Adjacent.lean` | Lind's theorem: every collision between adjacent rows is in that family. |
 | `Singmaster/LogBound.lean` | Singmaster's bound $N(t) \le 2 \log_2 t$. |
-| `Singmaster/Parity.lean` | Odd multiplicities come from central binomial coefficients. |
+| `Singmaster/Parity.lean` | $N(t)$ is odd exactly for central binomial coefficients. |
 | `Singmaster/Primes.lean` | Numbers that appear exactly twice or four times. |
 | `Singmaster/Window.lean` | The bracket $(n+1-k)^k \le k! \binom{n}{k} \le n^k$ and the prime-window rules. |
 | `Singmaster/Certified.lean` | Column certificates, their soundness, and exact counts from a passing check. |

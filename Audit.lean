@@ -31,6 +31,7 @@ elab "#assert_standard_axioms " ids:ident* : command => do
   Singmaster.singmaster.variants.ncard_le_two_mul_log
   Singmaster.exists_centralBinom_of_odd_ncard
   Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven
+  Singmaster.odd_ncard_iff
   Singmaster.pow_le_factorial_mul_choose_le
   Singmaster.prime_dvd_choose_iff_window
   Singmaster.central_window

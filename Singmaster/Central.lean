@@ -36,17 +36,6 @@ def centralOK : ℕ → List (ℕ × List ℕ) → Bool
     decide ((2 * m).descFactorial m = m.factorial * t) && decide (as.length + 1 = m) &&
       colsOK t [(2 * m, m)] 2 as && centralOK (m + 1) rest
 
-theorem centralBinom_lt_succ (m : ℕ) : Nat.centralBinom m < Nat.centralBinom (m + 1) := by
-  have h := Nat.succ_mul_centralBinom_succ m
-  have hp := Nat.centralBinom_pos m
-  have h2 : (m + 1) * Nat.centralBinom m < (m + 1) * Nat.centralBinom (m + 1) := by
-    rw [h]
-    nlinarith
-  exact Nat.lt_of_mul_lt_mul_left h2
-
-theorem centralBinom_strictMono : StrictMono Nat.centralBinom :=
-  strictMono_nat_of_lt_succ centralBinom_lt_succ
-
 theorem centralOK_sound (L : List (ℕ × List ℕ)) :
     ∀ m₀, centralOK m₀ L = true → ∀ m, m₀ ≤ m → m < m₀ + L.length →
       ∀ n k, 2 ≤ k → 2 * k ≤ n → n.choose k = Nat.centralBinom m → n = 2 * m ∧ k = m := by
