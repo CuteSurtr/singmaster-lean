@@ -54,6 +54,9 @@ try:
 except ImportError:
     mpmath = None
 
+HAVE_MPFR = "gmpy2" in globals() and hasattr(gmpy2, "lngamma")
+LN10 = math.log(10)
+
 
 def primes_upto(n):
     sieve = bytearray([1]) * (n + 1)
@@ -105,44 +108,191 @@ def restrict(J, L, k, p, s, contains):
     return out
 
 
+# Miller-Rabin with the first 13 prime bases is deterministic below psi_13
+# (Sorenson and Webster, Math. Comp. 86 (2017), 985-1003).
+MR_BASES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
+MR_LIMIT = 3317044064679887385961981
+
+
+def is_prime_det(x):
+    """Primality for 0 <= x < MR_LIMIT, proven correct in that range."""
+    x = int(x)
+    assert x < MR_LIMIT
+    if x < 2:
+        return False
+    for p in MR_BASES:
+        if x % p == 0:
+            return x == p
+    d, s = x - 1, 0
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+    for a in MR_BASES:
+        y = pow(a, d, x)
+        if y == 1 or y == x - 1:
+            continue
+        for _ in range(s - 1):
+            y = y * y % x
+            if y == x - 1:
+                break
+        else:
+            return False
+    return True
+
+
+def window_filter(J, A, k, p0, B):
+    """Remove the offsets j whose window (A + j - k, A + j] contains a killer: a prime P > k
+    that does not divide t. Killers up to B come from p0 (sieved primes with v_P(t) = 0);
+    every prime above B is a killer (all prime factors of t are at most B) and is found with
+    is_prime_det, which needs A + j < MR_LIMIT; above that only p0 is used.
+    A killer P does not divide k!, so it would divide C(n, k). Returns (J', primality tests)."""
+    out, tests = [], 0
+    floor_k = k  # killers must exceed k
+
+    def last_killer(n):
+        """Largest killer in (max(n - k, k), n], or None."""
+        nonlocal tests
+        lo = max(n - k, floor_k)
+        best = None
+        if n > B and n < MR_LIMIT:
+            x, stop = n, max(lo, B)
+            while x > stop:
+                tests += 1
+                if is_prime_det(x):
+                    return x
+                x -= 1
+        i = bisect.bisect_right(p0, min(n, B)) - 1
+        if i >= 0 and p0[i] > lo:
+            best = p0[i]
+        return best
+
+    def next_killer(n, limit):
+        """Smallest killer in (n, limit], or None."""
+        nonlocal tests
+        cand = None
+        i = bisect.bisect_right(p0, n)
+        if i < len(p0) and p0[i] <= limit:
+            cand = p0[i]
+        top = limit if cand is None else cand - 1
+        x = max(n, B) + 1
+        if x <= top and top < MR_LIMIT:
+            while x <= top:
+                tests += 1
+                if is_prime_det(x):
+                    return x
+                x += 1
+        elif x <= top:
+            return cand  # cannot test primes this large; fall back to sieved killers only
+        return cand
+
+    for lo, hi in J:
+        n, nhi = A + lo, A + hi
+        while n <= nhi:
+            P = last_killer(n)
+            if P is not None:
+                n = P + k  # P lies in the window of every n' in [P, P + k - 1]
+                continue
+            Q = next_killer(n, nhi)
+            if Q is None:
+                out.append((n - A, nhi - A))
+                break
+            out.append((n - A, Q - 1 - A))
+            n = Q
+    return out, tests
+
+
 def bracket(t, k, logt, dps):
     """An interval [A, A + L - 1] containing every n with C(n, k) = t.
     Exactly: (n - k + 1)^k <= k! t <= n^k, so n lies in [ceil(r), floor(r) + k - 1] for
-    r = (k! t)^(1/k). If r is below 10^(dps - 20), r is computed with mpmath at dps digits and
-    widened by a relative 10^-(dps - 15); otherwise x = floor(r) is computed exactly."""
+    r = (k! t)^(1/k). If r is below 10^(dps - 20), r is computed in floating point and widened
+    by a relative 10^-(dps - 15): with gmpy2 (MPFR, correctly rounded log, lngamma and exp,
+    precision 4 dps bits) or mpmath at dps digits. Otherwise x = floor(r) is computed exactly.
+    logt must be log(t) at that precision (see log_of)."""
     if logt is not None:
-        with mpmath.workdps(dps):
-            lr = (mpmath.loggamma(k + 1) + logt) / k
-            if lr < (dps - 20) * mpmath.log(10):
-                r = mpmath.exp(lr)
-                eps = mpmath.mpf(10) ** (-(dps - 15))
-                lo = int(mpmath.ceil(r * (1 - eps)))
-                hi = int(mpmath.floor(r * (1 + eps))) + k - 1
-                return mpz(lo), hi - lo + 1
+        if HAVE_MPFR:
+            ctx = gmpy2.get_context()
+            old = ctx.precision
+            ctx.precision = 4 * dps
+            try:
+                lr = (gmpy2.lngamma(gmpy2.mpfr(k + 1)) + logt) / k
+                if lr < (dps - 20) * LN10:
+                    r = gmpy2.exp(lr)
+                    eps = gmpy2.mpfr(10) ** (-(dps - 15))
+                    lo = int(gmpy2.ceil(r * (1 - eps)))
+                    hi = int(gmpy2.floor(r * (1 + eps))) + k - 1
+                    return mpz(lo), hi - lo + 1
+            finally:
+                ctx.precision = old
+        else:
+            with mpmath.workdps(dps):
+                lr = (mpmath.loggamma(k + 1) + logt) / k
+                if lr < (dps - 20) * mpmath.log(10):
+                    r = mpmath.exp(lr)
+                    eps = mpmath.mpf(10) ** (-(dps - 15))
+                    lo = int(mpmath.ceil(r * (1 - eps)))
+                    hi = int(mpmath.floor(r * (1 + eps))) + k - 1
+                    return mpz(lo), hi - lo + 1
     return iroot(fac(k) * t, k), k
 
 
-def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64):
-    """All n with C(n, k) = t. plist/elist: ascending primes p with v_p(t).
-    Returns (solutions, primes_used, exact_checks)."""
+_SPLIT_CACHE = {}
+
+
+def split_primes(plist, elist):
+    """(primes with v_p(t) = 0 ascending, primes with v_p(t) >= 1 descending), cached per list."""
+    key = id(plist)
+    hit = _SPLIT_CACHE.get(key)
+    if hit is not None and hit[0] is plist:
+        return hit[1], hit[2]
+    p0 = [p for p, e in zip(plist, elist) if e == 0]
+    p1 = [p for p, e in zip(plist, elist) if e >= 1][::-1]
+    _SPLIT_CACHE.clear()
+    _SPLIT_CACHE[key] = (plist, p0, p1)
+    return p0, p1
+
+
+def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64,
+            B=None, nmin=None, nmax=None, pw_after=12):
+    """All n with C(n, k) = t (and n >= nmin, if given). plist/elist: ascending primes p with
+    v_p(t). B: every prime factor of t is at most B (enables the prime-in-window filter).
+    Returns (solutions, valuation primes used, primality tests, exact checks)."""
     A, L = bracket(t, k, logt, dps)
     J = [(0, L - 1)]
-    i_lo = bisect.bisect_right(plist, k)
-    i_hi = len(plist) - 1
-    used = 0
-    take_top = True
-    while J and i_lo <= i_hi and used < max_primes:
-        if take_top:
-            idx, i_hi = i_hi, i_hi - 1
+    lo_j = int(max(0, nmin - A)) if nmin is not None else 0
+    hi_j = int(min(L - 1, nmax - A)) if nmax is not None else int(L - 1)
+    J = [(lo_j, hi_j)] if lo_j <= hi_j else []
+    # The most selective primes p > k: those dividing t, largest first (a window of length k
+    # contains a multiple of p for about a fraction k/p of the candidates), and those not
+    # dividing t, smallest first (a window avoids every multiple for about 1 - k/p of them).
+    p0, p1 = split_primes(plist, elist)
+    i0 = bisect.bisect_right(p0, k)
+    i1 = 0
+    used = tests = 0
+    take_p1 = True
+    pw_done = False
+    while J and used < max_primes:
+        if not pw_done and used >= pw_after and B is not None:
+            J, tests = window_filter(J, A, k, p0, B)
+            pw_done = True
+            continue
+        have1 = i1 < len(p1) and p1[i1] > k
+        have0 = i0 < len(p0)
+        if not (have0 or have1):
+            break
+        if (take_p1 and have1) or not have0:
+            p, contains = p1[i1], True
+            i1 += 1
         else:
-            idx, i_lo = i_lo, i_lo + 1
-        take_top = not take_top
-        p = plist[idx]
-        J = restrict(J, L, k, p, int((-A) % p), elist[idx] >= 1)
+            p, contains = p0[i0], False
+            i0 += 1
+        take_p1 = not take_p1
+        J = restrict(J, L, k, p, int((-A) % p), contains)
         used += 1
+    if J and not pw_done and B is not None:
+        J, tests = window_filter(J, A, k, p0, B)
     if not J:
-        return [], used, 0
-    count = sum(h - l + 1 for l, h in J)
+        return [], used, tests, 0
+    count = int(sum(h - l + 1 for l, h in J))
     sols = []
     if count <= max_exact:
         for lo, h in J:
@@ -150,8 +300,8 @@ def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64)
                 n = A + j
                 if comb(n, k) == t:
                     sols.append(int(n))
-        return sols, used, count
-    # Too many survivors: binary search the whole bracket exactly (C(n, k) increases in n).
+        return sols, used, tests, count
+    # Too many survivors: binary search the bracket exactly (C(n, k) increases in n).
     lo, hi = A, A + L - 1
     checks = 0
     while lo < hi:
@@ -162,12 +312,21 @@ def solve_k(t, k, plist, elist, logt=None, dps=60, max_primes=400, max_exact=64)
         else:
             hi = mid
     checks += 1
-    if comb(lo, k) == t:
+    if comb(lo, k) == t and (nmin is None or lo >= nmin) and (nmax is None or lo <= nmax):
         sols.append(int(lo))
-    return sols, used, checks
+    return sols, used, tests, checks
 
 
 def log_of(t, dps):
+    """log(t) for bracket(): an MPFR number at 4 dps bits, or an mpmath number at dps digits."""
+    if HAVE_MPFR:
+        ctx = gmpy2.get_context()
+        old = ctx.precision
+        ctx.precision = 4 * dps
+        try:
+            return gmpy2.log(gmpy2.mpfr(t))
+        finally:
+            ctx.precision = old
     if mpmath is None:
         return None
     with mpmath.workdps(dps):
@@ -192,6 +351,16 @@ def generic_vals(t, bound):
     return ps, es
 
 
+def largest_factor(t, ps, es):
+    """Largest prime factor of t if t factors completely over the primes ps, else None."""
+    u, big = t, None
+    for p, e in zip(ps, es):
+        if e:
+            u //= p ** e
+            big = p
+    return big if u == 1 else None
+
+
 def kmax_for(t):
     """Largest k with C(2k, k) <= t (a solution with k <= n/2 has C(2k, k) <= C(n, k))."""
     k = 1
@@ -214,13 +383,17 @@ def central_one(m, dps=60, use_log=True):
     plist = primes_upto(2 * m)
     elist = [carries(m, m, p) for p in plist]
     logt = log_of(t, dps) if use_log else None
-    sols, used, exact = [], 0, 0
+    sols, used, exact, tests = [], 0, 0, 0
     for k in range(2, m):
-        s, u, c = solve_k(t, k, plist, elist, logt, dps)
+        # Any solution has n > 2m: for n <= 2m and k < m, C(n, k) <= C(2m, k) < C(2m, m).
+        # Every prime factor of C(2m, m) is at most 2m.
+        s, u, pt, c = solve_k(t, k, plist, elist, logt, dps, B=2 * m, nmin=2 * m + 1)
         used += u
+        tests += pt
         exact += c
         sols += [[n, k] for n in s]
-    return {"m": m, "solutions": sols, "primes_used": used, "exact_checks": exact}
+    return {"m": m, "solutions": sols, "primes_used": used, "prime_tests": tests,
+            "exact_checks": exact}
 
 
 def run_central(args):
@@ -262,20 +435,38 @@ def lind_member(i):
     return fib(2 * i + 2) * fib(2 * i + 3), fib(2 * i) * fib(2 * i + 3)
 
 
-def lind_worker(i, ks, deadline, dps):
+def lind_worker(i, start, stride, kmax, deadline, dps):
+    """Search k = start, start + stride, ... <= kmax in order, until the deadline.
+    Records totals, every hit, and every k that needed exact checks or hit the prime cap."""
     N, K = lind_member(i)
     t = comb(N, K)
     plist = primes_upto(N)
     elist = [carries(K, N - K, p) for p in plist]
     logt = log_of(t, dps)
-    res, t0 = [], time.time()
-    for k in ks:
+    t0 = time.time()
+    done = 0
+    hits, heavy = [], []
+    tot = {"primes": 0, "tests": 0, "exact": 0}
+    for k in range(start, kmax + 1, stride):
         if time.time() > deadline:
             break
-        s, u, c = solve_k(t, k, plist, elist, logt, dps)
-        res.append([k, s, u, c])
-    return {"i": i, "assigned_count": len(ks), "assigned_first": ks[0] if ks else None,
-            "results": res, "seconds": time.time() - t0}
+        # For k < K a solution has n > N: C(n, k) <= C(N, k) < C(N, K) when n <= N.
+        # For K + 1 < k <= kmax a solution has n <= N - 2: C(N - 1, k) > C(N - 1, K + 1) = t.
+        # Every prime factor of C(N, K) is at most N.
+        s, u, pt, c = solve_k(t, k, plist, elist, logt, dps, B=N,
+                              nmin=N + 1 if k < K else None,
+                              nmax=N - 2 if k > K + 1 else None)
+        done += 1
+        tot["primes"] += u
+        tot["tests"] += pt
+        tot["exact"] += c
+        if s:
+            hits.append([k, s])
+        if c or u >= 400:
+            heavy.append([k, u, pt, c])
+    assigned = len(range(start, kmax + 1, stride))
+    return {"i": i, "start": start, "stride": stride, "assigned": assigned, "done": done,
+            "hits": hits, "heavy": heavy, "totals": tot, "seconds": time.time() - t0}
 
 
 def run_lind(args):
@@ -283,16 +474,19 @@ def run_lind(args):
     N, K = lind_member(args.i)
     t = comb(N, K)
     kmax = kmax_bound(t) if args.kmax is None else args.kmax
+    # nmax = N - 2 for k > K + 1 needs C(N - 1, k) > C(N - 1, K + 1), i.e. k < N - 2 - K.
+    assert kmax < N - 2 - K, (kmax, N - 2 - K)
     stride = args.jobs * args.workers
-    lanes = [list(range(2 + args.job * args.workers + w, kmax + 1, stride))
-             for w in range(args.workers)]
+    starts = [2 + args.job * args.workers + w for w in range(args.workers)]
     with Pool(args.workers) as pool:
-        parts = pool.starmap(lind_worker, [(args.i, ks, deadline, args.dps) for ks in lanes])
+        parts = pool.starmap(lind_worker, [(args.i, st, stride, kmax, deadline, args.dps)
+                                           for st in starts])
     out = {"mode": "lind", "i": args.i, "N": N, "K": K, "digits": len(str(t)), "kmax": kmax,
            "job": args.job, "jobs": args.jobs, "workers": args.workers, "lanes": parts}
     json.dump(out, open(args.out, "w"))
-    found = [(r[0], r[1]) for p in parts for r in p["results"] if r[1]]
-    print(f"lind i={args.i} job {args.job}: kmax={kmax}, hits (k, n): {found}")
+    found = [h for p in parts for h in p["hits"]]
+    print(f"lind i={args.i} job {args.job}: kmax={kmax}, hits (k, n): {found}, "
+          f"done {sum(p['done'] for p in parts)} of {sum(p['assigned'] for p in parts)}")
 
 
 # ----------------------------------------------------------------------------- merge
@@ -302,14 +496,22 @@ def run_merge(args):
     central, lind = {}, {}
     for path in args.files:
         d = json.load(open(path))
-        for lane in d["lanes"]:
-            if d["mode"] == "central":
+        if d["mode"] == "central":
+            for lane in d["lanes"]:
                 for r in lane["results"]:
                     central[r["m"]] = r
-            else:
-                for k, s, u, c in lane["results"]:
-                    lind.setdefault(d["i"], {"kmax": d["kmax"], "N": d["N"], "K": d["K"],
-                                             "digits": d["digits"], "k": {}})["k"][k] = s
+            continue
+        e = lind.setdefault(d["i"], {"N": d["N"], "K": d["K"], "digits": d["digits"],
+                                      "kmax": d["kmax"], "lanes": {}, "hits": []})
+        for lane in d["lanes"]:
+            if "start" in lane:  # compact format
+                e["lanes"][lane["start"]] = lane
+                e["hits"] += lane["hits"]
+                e["stride"] = lane["stride"]
+            else:  # older per-k format
+                for r in lane["results"]:
+                    if r[1]:
+                        e["hits"].append([r[0], r[1]])
     report = {}
     if central:
         m = min(central)
@@ -319,15 +521,26 @@ def run_merge(args):
         report["central"] = {"contiguous_from": min(central), "contiguous_to": m,
                              "values_done": len(central), "hits": hits,
                              "exact_checks": sum(r["exact_checks"] for r in central.values()),
+                             "prime_tests": sum(r.get("prime_tests", 0) for r in central.values()),
                              "primes_used": sum(r["primes_used"] for r in central.values())}
-    for i, d in sorted(lind.items()):
-        k = 1
-        while k + 1 in d["k"]:
-            k += 1
-        hits = {kk: s for kk, s in d["k"].items() if s}
-        report[f"lind_{i}"] = {"N": d["N"], "K": d["K"], "digits": d["digits"],
-                               "kmax": d["kmax"], "k_contiguous_to": k, "hits": hits,
-                               "complete": k >= d["kmax"]}
+    for i, e in sorted(lind.items()):
+        lanes = e["lanes"]
+        stride = e.get("stride")
+        cover = None
+        if lanes and stride and len(lanes) == stride:
+            # every residue class 2 + r (mod stride) has its own lane
+            bounds = []
+            for st, ln in lanes.items():
+                if ln["done"] >= ln["assigned"]:
+                    bounds.append(e["kmax"])
+                else:
+                    bounds.append(st + ln["done"] * stride - 1)
+            cover = min(bounds)
+        report[f"lind_{i}"] = {"N": e["N"], "K": e["K"], "digits": e["digits"],
+                               "kmax": e["kmax"], "k_contiguous_to": cover,
+                               "complete": cover is not None and cover >= e["kmax"],
+                               "hits": sorted(e["hits"]),
+                               "lanes_seen": len(lanes), "stride": stride}
     json.dump(report, open(args.out, "w"), indent=1, sort_keys=True)
     print(json.dumps(report, indent=1, sort_keys=True))
 
@@ -344,11 +557,13 @@ def run_selftest(args):
     for t, expect in known.items():
         t = mpz(t)
         ps, es = generic_vals(t, 4000)
+        B = largest_factor(t, ps, es)
         got = []
         for k in range(2, kmax_for(t) + 1):
-            s, _, _ = solve_k(t, k, ps, es, log_of(t, 60))
+            s = solve_k(t, k, ps, es, log_of(t, 60))[0]
             assert s == brute_k(t, k), (t, k)
             assert solve_k(t, k, ps, es)[0] == s, (t, k)
+            assert solve_k(t, k, ps, es, log_of(t, 60), B=B)[0] == s, (t, k)
             got += [(n, k) for n in s if 2 * k <= n]
         assert sorted(got) == sorted(expect), (int(t), got, expect)
     print("known collisions recovered")
@@ -364,9 +579,16 @@ def run_selftest(args):
             b = brute_k(t, k)
             assert solve_k(t, k, ps, es)[0] == b, (n, kk, k)
             assert solve_k(t, k, ps, es, log_of(t, 30), 30)[0] == b, (n, kk, k)
+            assert solve_k(t, k, ps, es, log_of(t, 30), 30, B=n, pw_after=0)[0] == b, (n, kk, k)
     print(f"{args.random} random binomial coefficients agree with the unfiltered search")
     # 3. Central coefficients: Kummer valuations and the unfiltered search agree.
     for m in range(2, args.central + 1):
+        t = comb(2 * m, m)
+        plist = primes_upto(2 * m)
+        elist = [carries(m, m, p) for p in plist]
+        for k in range(2, m):
+            s = solve_k(t, k, plist, elist, log_of(t, 60), B=2 * m, nmin=2 * m + 1, pw_after=0)[0]
+            assert s == [n for n in brute_k(t, k) if n > 2 * m], (m, k)
         r = central_one(m)
         assert central_one(m, use_log=False)["solutions"] == r["solutions"]
         t = comb(2 * m, m)
@@ -382,7 +604,8 @@ def run_selftest(args):
         elist = [carries(K, N - K, p) for p in plist]
         got = []
         for k in range(2, kmax_for(t) + 1):
-            s, _, _ = solve_k(t, k, plist, elist, log_of(t, 60))
+            s = solve_k(t, k, plist, elist, log_of(t, 60), B=N, nmin=N + 1 if k < K else None,
+                        nmax=N - 2 if k > K + 1 else None)[0]
             got += [(n, k) for n in s if 2 * k <= n]
         print(f"lind i={i}: C({N},{K}) has representations {sorted(got)}")
         assert (N, K) in got and (N - 1, K + 1) in got
