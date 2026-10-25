@@ -192,8 +192,9 @@ import Singmaster.Parity
 
 For `2 ≤ m ≤ {M}`, the kernel checks that `C(2m, m)` appears only at `(2m, m)`, `(t, 1)` and
 `(t, t - 1)`, so it appears exactly three times. Together with
-`Singmaster.exists_centralBinom_of_odd_ncard`, no number below `C({2 * M + 2}, {M + 1})`
-(about `10^{len(str(comb(2 * M + 2, M + 1))) - 1}`) appears exactly 5 or 7 times.
+`Singmaster.exists_centralBinom_of_odd_ncard`, a number below `C({2 * M + 2}, {M + 1})`
+(about `10^{len(str(comb(2 * M + 2, M + 1))) - 1}`) that appears an odd number of times appears once
+or three times. In particular none appears exactly 5 or 7 times.
 -/
 
 namespace Singmaster
@@ -302,21 +303,27 @@ theorem ncard_centralBinom {{m : ℕ}} (h1 : 2 ≤ m) (h2 : m ≤ {M}) :
     (centralOK_sound centralCerts 2 centralOK_centralCerts m h1
       (by rw [centralCerts_length]; omega))
 
-/-- **No number below `C({2 * M + 2}, {M + 1})` appears exactly 5 or 7 times** in Pascal's triangle. -/
-theorem ncard_ne_five_and_ne_seven {{t : ℕ}} (ht : t < Nat.centralBinom {M + 1}) :
-    (solutions t).ncard ≠ 5 ∧ (solutions t).ncard ≠ 7 := by
-  suffices h : ¬ ((solutions t).ncard = 5 ∨ (solutions t).ncard = 7) from
-    ⟨fun h5 => h (Or.inl h5), fun h7 => h (Or.inr h7)⟩
-  intro h57
-  obtain ⟨m, hm1, rfl⟩ := exists_centralBinom_of_ncard_eq_five_or_seven h57
+/-- **Below `C({2 * M + 2}, {M + 1})`, a number that appears an odd number of times appears once or
+three times** in Pascal's triangle. -/
+theorem ncard_eq_one_or_three_of_odd {{t : ℕ}} (ht : t < Nat.centralBinom {M + 1})
+    (hodd : Odd (solutions t).ncard) : (solutions t).ncard = 1 ∨ (solutions t).ncard = 3 := by
+  obtain ⟨m, hm1, rfl⟩ := exists_centralBinom_of_odd_ncard hodd
   have hm : m ≤ {M} := by
     by_contra hc
     have := centralBinom_strictMono.monotone (show {M + 1} ≤ m by omega)
     omega
   rcases (show m = 1 ∨ 2 ≤ m by omega) with rfl | hm2
-  · rw [show Nat.centralBinom 1 = 2 from rfl, solutions_two, Set.ncard_singleton] at h57
+  · left
+    rw [show Nat.centralBinom 1 = 2 from rfl, solutions_two, Set.ncard_singleton]
+  · exact Or.inr (ncard_centralBinom hm2 hm)
+
+/-- **No number below `C({2 * M + 2}, {M + 1})` appears exactly 5 or 7 times** in Pascal's triangle. -/
+theorem ncard_ne_five_and_ne_seven {{t : ℕ}} (ht : t < Nat.centralBinom {M + 1}) :
+    (solutions t).ncard ≠ 5 ∧ (solutions t).ncard ≠ 7 := by
+  refine ⟨fun h => ?_, fun h => ?_⟩
+  · have := ncard_eq_one_or_three_of_odd ht (by rw [h]; exact ⟨2, rfl⟩)
     omega
-  · rw [ncard_centralBinom hm2 hm] at h57
+  · have := ncard_eq_one_or_three_of_odd ht (by rw [h]; exact ⟨3, rfl⟩)
     omega
 
 end Singmaster

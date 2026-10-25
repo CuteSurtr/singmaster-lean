@@ -31,7 +31,7 @@ $(n, k)$ with $1 \le k < n$ and $\binom{n}{k} = t$.
 | `Singmaster.ncard_choose_714_272` | $\binom{714}{272} = \binom{713}{273}$, a number with 205 digits, appears exactly $6$ times. |
 | `Singmaster.ncard_choose_4895_1869` | $\binom{4895}{1869} = \binom{4894}{1870}$, a number with 1412 digits, appears exactly $6$ times. |
 | `Singmaster.ncard_centralBinom` | For $2 \le m \le 200$, $\binom{2m}{m}$ appears exactly $3$ times. |
-| `Singmaster.ncard_ne_five_and_ne_seven` | No number below $\binom{402}{201} \approx 4.1 \cdot 10^{119}$ appears exactly $5$ or $7$ times. |
+| `Singmaster.ncard_eq_one_or_three_of_odd`, `Singmaster.ncard_ne_five_and_ne_seven` | A number below $\binom{402}{201} \approx 4.1 \cdot 10^{119}$ that appears an odd number of times appears once or three times; in particular none appears exactly $5$ or $7$ times. |
 | `Singmaster.central_window`, `Singmaster.choose_eq_window` | The divisibility rules used to prune computer searches for further positions. |
 
 The numbers $120, \dots, 24310$, $3003$ and the Lind–Singmaster values are all the numbers known

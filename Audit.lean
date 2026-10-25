@@ -54,4 +54,5 @@ elab "#assert_standard_axioms " ids:ident* : command => do
   Singmaster.ncard_solutions_fib_3
   Singmaster.ncard_solutions_fib_4
   Singmaster.ncard_centralBinom
+  Singmaster.ncard_eq_one_or_three_of_odd
   Singmaster.ncard_ne_five_and_ne_seven
