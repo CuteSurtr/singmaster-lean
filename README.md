@@ -20,6 +20,7 @@ $(n, k)$ with $1 \le k < n$ and $\binom{n}{k} = t$.
 | `Singmaster.choose_fib_eq` | $\binom{F_{2i+2}F_{2i+3}}{F_{2i}F_{2i+3}} = \binom{F_{2i+2}F_{2i+3}-1}{F_{2i}F_{2i+3}+1}$ for every $i$ (Lind 1968, Singmaster 1975). |
 | `Singmaster.six_le_ncard_solutions_fib` | For $i \ge 1$ that common value appears at least $6$ times. |
 | `Singmaster.singmaster.variants.infinite_six_le_ncard` | Infinitely many integers appear at least $6$ times. |
+| `Singmaster.choose_eq_choose_pred_succ_iff_fib` | Conversely, for $1 \le k$ and $k + 2 \le n$, $\binom{n}{k} = \binom{n-1}{k+1}$ only for $n = F_{2i+2}F_{2i+3}$, $k = F_{2i}F_{2i+3}$ (Lind 1968). |
 | `Singmaster.singmaster.variants.ncard_le_two_mul_log` | $N(t) \le 2 \log_2 t$ for every $t$ (Singmaster 1971). |
 | `Singmaster.exists_centralBinom_of_odd_ncard` | If $N(t)$ is odd, then $t = \binom{2m}{m}$ for some $m \ge 1$. |
 | `Singmaster.exists_centralBinom_of_ncard_eq_five_or_seven` | In particular, a number that appears exactly $5$ or $7$ times is a central binomial coefficient. |
@@ -45,6 +46,10 @@ The Lind–Singmaster family: with $a = F_{2i}$ and $b = F_{2i+1}$, Cassini's id
 $b^2 = ab + a^2 + 1$. That makes $n = (a+b)(a+2b)$ and $k = a(a+2b)$ satisfy
 $n(k+1) = (n-k)(n-k-1)$, which is equivalent to $\binom{n}{k} = \binom{n-1}{k+1}$.
 
+Lind's theorem: with $s = k + 1$ and $c = n - 2k - 1$, the collision becomes
+$s^2 + c = sc + c^2$. A gcd argument gives $c = b^2$ and $s = b(a+b)$ with $b^2 = ab + a^2 + 1$,
+and descent $(a, b) \mapsto (2a - b, b - a)$ shows $a = F_{2i}$, $b = F_{2i+1}$.
+
 Odd multiplicities: the positions $(n, k)$ and $(n, n - k)$ pair up, and a position is its own
 partner only when $n = 2k$.
 
@@ -64,6 +69,7 @@ multiplicities $5$ and $7$ below $\binom{402}{201}$.
 | `Singmaster/Basic.lean` | The definition, unimodality of rows, and finiteness of `solutions t`. |
 | `Singmaster/N3003.lean` | $N(3003) = 8$. |
 | `Singmaster/Fibonacci.lean` | The Lind–Singmaster family. |
+| `Singmaster/Adjacent.lean` | Lind's theorem: every collision between adjacent rows is in that family. |
 | `Singmaster/LogBound.lean` | Singmaster's bound $N(t) \le 2 \log_2 t$. |
 | `Singmaster/Parity.lean` | Odd multiplicities come from central binomial coefficients. |
 | `Singmaster/Window.lean` | The bracket $(n+1-k)^k \le k! \binom{n}{k} \le n^k$ and the prime-window rules. |
@@ -86,8 +92,8 @@ lake exe cache get && lake build
 ```
 
 The files were also checked on [live.lean-lang.org](https://live.lean-lang.org): `Basic`, `N3003`,
-`Fibonacci` and `LogBound` on 2026-10-12 with v4.34.0, and `Parity`, `Window`, `Certified`,
-`Collisions` and `Central` on 2026-10-25 with v4.35.0. Both times there were no errors or warnings,
+`Fibonacci` and `LogBound` on 2026-10-12 with v4.34.0, and `Parity`, `Adjacent`, `Window`,
+`Certified`, `Collisions` and `Central` on 2026-10-25 with v4.35.0. Both times there were no errors or warnings,
 and `#print axioms` reported only `propext`, `Classical.choice` and `Quot.sound`.
 
 ## References

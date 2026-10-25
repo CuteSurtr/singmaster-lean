@@ -1,6 +1,7 @@
 import Singmaster.Basic
 import Singmaster.N3003
 import Singmaster.Fibonacci
+import Singmaster.Adjacent
 import Singmaster.LogBound
 import Singmaster.Parity
 import Singmaster.Window
