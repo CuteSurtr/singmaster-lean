@@ -114,8 +114,8 @@ Besides `3003`, which appears eight times (`Singmaster.N3003`), every number kno
 more than four times in Pascal's triangle is one of `120, 210, 1540, 7140, 11628, 24310`, or a
 Lind–Singmaster number `C(F(2i+2) F(2i+3), F(2i) F(2i+3))` with `i ≥ 2`. The certificates of
 `Singmaster.Certified` show that each of the six small numbers appears exactly six times, and
-so do the Lind–Singmaster numbers for `i = 2` (`C(104, 39)`, 29 digits) and `i = 3`
-(`C(714, 272)`, 205 digits).
+so do the Lind–Singmaster numbers for `i = 2` (`C(104, 39)`, 29 digits), `i = 3`
+(`C(714, 272)`, 205 digits) and `i = 4` (`C(4895, 1869)`, 1412 digits).
 
 Each certificate lists, for every column `k = 2, …, K - 1`, the largest row `a` with
 `C(a, k) < t`. The kernel checks them with `decide +kernel`. They were produced by
@@ -138,21 +138,27 @@ theorem ncard_{t} : (solutions {t}).ncard = 6 :=
     (by norm_num) (by decide +kernel)).trans (by decide)
 """)
 
-lind = [(2, 104, 39, 8, 13, 3), (3, 714, 272, 21, 34, 8)]
-for i, N, K, f22, f23, f2 in lind:
+# (i, N, K, maxHeartbeats for the count or None for the default). For i = 4 the check uses
+# 425,055 heartbeats (measured with `#count_heartbeats in` on Lean v4.35.0).
+lind = [(2, 104, 39, None), (3, 714, 272, None), (4, 4895, 1869, 1000000)]
+for i, N, K, heartbeats in lind:
     t = comb(N, K)
     km, as_, found = cert(t, [(N, K), (N - 1, K + 1)])
     assert not found
     digits = len(str(t))
+    rec_opt = ("-- The default `maxRecDepth` is too small to elaborate this list.\n"
+               "set_option maxRecDepth 100000 in\n") if len(as_) > 1000 else ""
+    hb_opt = (f"-- The kernel check needs more than the default 200000 heartbeats.\n"
+              f"set_option maxHeartbeats {heartbeats} in\n") if heartbeats else ""
     col.append(f"""theorem choose_{N}_{K} : ({N} : ℕ).choose {K} =
 {wrap_num(t)} :=
   (Nat.choose_eq_descFactorial_div_factorial {N} {K}).trans (by decide +kernel)
 
-/-- Column certificates for `C({N}, {K})`, columns `k = 2, …, {km}`. -/
+{rec_opt}/-- Column certificates for `C({N}, {K})`, columns `k = 2, …, {km}`. -/
 def cert_{N}_{K} : List ℕ :=
 {wrap(as_, indent="  ")}
 
-/-- The Lind–Singmaster number for `i = {i}`, `C({N}, {K}) = C({N - 1}, {K + 1})` ({digits} digits),
+{hb_opt}/-- The Lind–Singmaster number for `i = {i}`, `C({N}, {K}) = C({N - 1}, {K + 1})` ({digits} digits),
 appears exactly six times in Pascal's triangle. -/
 theorem ncard_choose_{N}_{K} : (solutions (({N} : ℕ).choose {K})).ncard = 6 := by
   rw [choose_{N}_{K}]
@@ -161,7 +167,8 @@ theorem ncard_choose_{N}_{K} : (solutions (({N} : ℕ).choose {K})).ncard = 6 :=
 
 /-- The same statement in the form of `Singmaster.choose_fib_eq` with `i = {i}`. -/
 theorem ncard_solutions_fib_{i} :
-    (solutions ((fib {2 * i + 2} * fib {2 * i + 3}).choose (fib {2 * i} * fib {2 * i + 3}))).ncard = 6 := by
+    (solutions ((fib {2 * i + 2} * fib {2 * i + 3}).choose
+      (fib {2 * i} * fib {2 * i + 3}))).ncard = 6 := by
   have h1 : fib {2 * i + 2} * fib {2 * i + 3} = {N} := by decide
   have h2 : fib {2 * i} * fib {2 * i + 3} = {K} := by decide
   rw [h1, h2]

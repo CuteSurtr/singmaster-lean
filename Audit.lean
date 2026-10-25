@@ -43,7 +43,9 @@ elab "#assert_standard_axioms " ids:ident* : command => do
   Singmaster.ncard_24310
   Singmaster.ncard_choose_104_39
   Singmaster.ncard_choose_714_272
+  Singmaster.ncard_choose_4895_1869
   Singmaster.ncard_solutions_fib_2
   Singmaster.ncard_solutions_fib_3
+  Singmaster.ncard_solutions_fib_4
   Singmaster.ncard_centralBinom
   Singmaster.ncard_ne_five_and_ne_seven

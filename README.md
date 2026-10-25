@@ -26,13 +26,14 @@ $(n, k)$ with $1 \le k < n$ and $\binom{n}{k} = t$.
 | `Singmaster.ncard_120`, `ncard_210`, `ncard_1540`, `ncard_7140`, `ncard_11628`, `ncard_24310` | Each of $120, 210, 1540, 7140, 11628, 24310$ appears exactly $6$ times. |
 | `Singmaster.ncard_choose_104_39` | $\binom{104}{39} = \binom{103}{40}$, a number with 29 digits, appears exactly $6$ times. |
 | `Singmaster.ncard_choose_714_272` | $\binom{714}{272} = \binom{713}{273}$, a number with 205 digits, appears exactly $6$ times. |
+| `Singmaster.ncard_choose_4895_1869` | $\binom{4895}{1869} = \binom{4894}{1870}$, a number with 1412 digits, appears exactly $6$ times. |
 | `Singmaster.ncard_centralBinom` | For $2 \le m \le 200$, $\binom{2m}{m}$ appears exactly $3$ times. |
 | `Singmaster.ncard_ne_five_and_ne_seven` | No number below $\binom{402}{201} \approx 4.1 \cdot 10^{119}$ appears exactly $5$ or $7$ times. |
 | `Singmaster.central_window`, `Singmaster.choose_eq_window` | The divisibility rules used to prune computer searches for further positions. |
 
 The numbers $120, \dots, 24310$, $3003$ and the Lind–Singmaster values are all the numbers known
-to appear more than four times. The last two Lind–Singmaster rows above are the cases $i = 2$ and
-$i = 3$ of `choose_fib_eq`.
+to appear more than four times. The three Lind–Singmaster rows above are the cases $i = 2$, $3$
+and $4$ of `choose_fib_eq`.
 
 ## Proof outlines
 
