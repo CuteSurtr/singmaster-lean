@@ -3,3 +3,7 @@ import Singmaster.N3003
 import Singmaster.Fibonacci
 import Singmaster.LogBound
 import Singmaster.Parity
+import Singmaster.Window
+import Singmaster.Certified
+import Singmaster.Collisions
+import Singmaster.Central

@@ -7,8 +7,8 @@ pp.unicode.fun = true
 autoImplicit = false
 relaxedAutoImplicit = false
 
-# The same Lean and Mathlib release as the "Stable" project on live.lean-lang.org,
-# where these files were checked.
+# CI builds with Lean and Mathlib v4.34.0. The files were also checked on live.lean-lang.org
+# with v4.34.0 and v4.35.0 (see README).
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
