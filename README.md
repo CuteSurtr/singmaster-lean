@@ -21,3 +21,14 @@ search with an unfiltered exact search and recovers all known collisions.
 
 The workflow in `.github/workflows/search.yml` runs the searches on GitHub Actions and merges
 the results into `report.json`.
+
+## Runs
+
+| Run | Central C(2m, m) | Lind–Singmaster |
+| --- | --- | --- |
+| 38251669680 (2026-10-12) | every m <= 35,273 | i = 3..6 complete |
+| 40166727006 (2026-10-25) | every m <= 150,001, scattered m up to 205,981 | i = 7 complete (only the two known positions); i = 8 for k <= 3,383,345; i = 9 for k <= 22,931,135 |
+
+No run has found a representation beyond the known ones. The current workflow continues run
+40166727006: it searches the m in 150002..212000 that run missed (`central_todo.json`), and
+resumes i = 8 and i = 9 with `--kstart`.

@@ -22,14 +22,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        job: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install gmpy2 mpmath
-      - run: nproc && python singsearch.py central --start 2 --stop 400000 --job ${{ matrix.job }} --jobs 13 --workers 4 --minutes 300 --out central-${{ matrix.job }}.json
+      # Run 40166727006 covered every m <= 150001 and scattered m up to 205981. This run takes the
+      # m in 150002..212000 that it missed (central_todo.json), in ascending order.
+      - run: nproc && python singsearch.py central --mlist central_todo.json --job ${{ matrix.job }} --jobs 12 --workers 4 --minutes 300 --out central-${{ matrix.job }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: central-${{ matrix.job }}
@@ -43,16 +45,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: i78
-            cmd: python singsearch.py lind --i 7 --job 0 --jobs 1 --workers 4 --dps 100 --minutes 60 --out lind-7.json && python singsearch.py lind --i 8 --job 0 --jobs 1 --workers 4 --dps 300 --minutes 230 --out lind-8.json
+          # Run 40166727006 covered k <= 3383345 for i = 8 and k <= 22931135 for i = 9.
+          - name: i8-0
+            cmd: python singsearch.py lind --i 8 --kstart 3383346 --job 0 --jobs 2 --workers 4 --dps 300 --minutes 300 --out lind-8-0.json
+          - name: i8-1
+            cmd: python singsearch.py lind --i 8 --kstart 3383346 --job 1 --jobs 2 --workers 4 --dps 300 --minutes 300 --out lind-8-1.json
           - name: i9-0
-            cmd: python singsearch.py lind --i 9 --job 0 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-0.json
+            cmd: python singsearch.py lind --i 9 --kstart 22931136 --job 0 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-0.json
           - name: i9-1
-            cmd: python singsearch.py lind --i 9 --job 1 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-1.json
+            cmd: python singsearch.py lind --i 9 --kstart 22931136 --job 1 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-1.json
           - name: i9-2
-            cmd: python singsearch.py lind --i 9 --job 2 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-2.json
+            cmd: python singsearch.py lind --i 9 --kstart 22931136 --job 2 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-2.json
           - name: i9-3
-            cmd: python singsearch.py lind --i 9 --job 3 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-3.json
+            cmd: python singsearch.py lind --i 9 --kstart 22931136 --job 3 --jobs 4 --workers 4 --dps 400 --minutes 300 --out lind-9-3.json
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5

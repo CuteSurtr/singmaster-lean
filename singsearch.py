@@ -399,12 +399,18 @@ def central_one(m, dps=60, use_log=True):
 def run_central(args):
     deadline = time.time() + args.minutes * 60
     stride = args.jobs * args.workers
-    tasks = [(w, list(range(args.start + args.job * args.workers + w, args.stop, stride)))
-             for w in range(args.workers)]
+    if args.mlist:
+        # An explicit ascending list of m, shared out round-robin so that all lanes advance
+        # through it together.
+        values = sorted(set(json.load(open(args.mlist))))
+        tasks = [(w, values[args.job * args.workers + w::stride]) for w in range(args.workers)]
+    else:
+        tasks = [(w, list(range(args.start + args.job * args.workers + w, args.stop, stride)))
+                 for w in range(args.workers)]
     with Pool(args.workers) as pool:
         parts = pool.starmap(central_worker, [(ms, deadline, args.dps) for _, ms in tasks])
     out = {"mode": "central", "job": args.job, "jobs": args.jobs, "workers": args.workers,
-           "start": args.start, "stop": args.stop, "lanes": parts}
+           "start": args.start, "stop": args.stop, "mlist": args.mlist, "lanes": parts}
     json.dump(out, open(args.out, "w"))
     done = sum(len(p["results"]) for p in parts)
     hits = [r for p in parts for r in p["results"] if r["solutions"]]
@@ -477,12 +483,13 @@ def run_lind(args):
     # nmax = N - 2 for k > K + 1 needs C(N - 1, k) > C(N - 1, K + 1), i.e. k < N - 2 - K.
     assert kmax < N - 2 - K, (kmax, N - 2 - K)
     stride = args.jobs * args.workers
-    starts = [2 + args.job * args.workers + w for w in range(args.workers)]
+    starts = [args.kstart + args.job * args.workers + w for w in range(args.workers)]
     with Pool(args.workers) as pool:
         parts = pool.starmap(lind_worker, [(args.i, st, stride, kmax, deadline, args.dps)
                                            for st in starts])
     out = {"mode": "lind", "i": args.i, "N": N, "K": K, "digits": len(str(t)), "kmax": kmax,
-           "job": args.job, "jobs": args.jobs, "workers": args.workers, "lanes": parts}
+           "kstart": args.kstart, "job": args.job, "jobs": args.jobs, "workers": args.workers,
+           "lanes": parts}
     json.dump(out, open(args.out, "w"))
     found = [h for p in parts for h in p["hits"]]
     print(f"lind i={args.i} job {args.job}: kmax={kmax}, hits (k, n): {found}, "
@@ -537,7 +544,8 @@ def run_merge(args):
                     bounds.append(st + ln["done"] * stride - 1)
             cover = min(bounds)
         report[f"lind_{i}"] = {"N": e["N"], "K": e["K"], "digits": e["digits"],
-                               "kmax": e["kmax"], "k_contiguous_to": cover,
+                               "kmax": e["kmax"], "k_from": min(lanes) if lanes else None,
+                               "k_contiguous_to": cover,
                                "complete": cover is not None and cover >= e["kmax"],
                                "hits": sorted(e["hits"]),
                                "lanes_seen": len(lanes), "stride": stride}
@@ -620,8 +628,11 @@ def main():
     s.add_argument("--central", type=int, default=60)
     s.add_argument("--lind", type=int, default=2)
     c = sub.add_parser("central")
-    for a in ("--start", "--stop", "--job", "--jobs", "--workers"):
+    for a in ("--job", "--jobs", "--workers"):
         c.add_argument(a, type=int, required=True)
+    c.add_argument("--start", type=int)
+    c.add_argument("--stop", type=int)
+    c.add_argument("--mlist", help="JSON list of m to search instead of --start/--stop")
     c.add_argument("--minutes", type=float, default=60)
     c.add_argument("--dps", type=int, default=60)
     c.add_argument("--out", required=True)
@@ -629,6 +640,7 @@ def main():
     for a in ("--i", "--job", "--jobs", "--workers"):
         l.add_argument(a, type=int, required=True)
     l.add_argument("--kmax", type=int)
+    l.add_argument("--kstart", type=int, default=2, help="first k to search (default 2)")
     l.add_argument("--minutes", type=float, default=60)
     l.add_argument("--dps", type=int, default=60)
     l.add_argument("--out", required=True)
@@ -636,6 +648,8 @@ def main():
     g.add_argument("files", nargs="+")
     g.add_argument("--out", required=True)
     args = ap.parse_args()
+    if args.mode == "central" and not args.mlist and (args.start is None or args.stop is None):
+        ap.error("central needs --mlist or both --start and --stop")
     {"selftest": run_selftest, "central": run_central, "lind": run_lind,
      "merge": run_merge}[args.mode](args)
 
