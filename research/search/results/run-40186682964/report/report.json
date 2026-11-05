@@ -1,0 +1,35 @@
+{
+ "central": {
+  "contiguous_from": 150002,
+  "contiguous_to": 150002,
+  "exact_checks": 3041167,
+  "hits": {},
+  "prime_tests": 1766231796,
+  "primes_used": 20245490273,
+  "values_done": 34563
+ },
+ "lind_8": {
+  "K": 4126647,
+  "N": 10803704,
+  "complete": false,
+  "digits": 3120256,
+  "hits": [],
+  "k_contiguous_to": 3500970,
+  "k_from": 3383346,
+  "kmax": 5182642,
+  "lanes_seen": 8,
+  "stride": 8
+ },
+ "lind_9": {
+  "K": 28284464,
+  "N": 74049690,
+  "complete": false,
+  "digits": 21386570,
+  "hits": [],
+  "k_contiguous_to": 22989519,
+  "k_from": 22931136,
+  "kmax": 35522333,
+  "lanes_seen": 16,
+  "stride": 16
+ }
+}

@@ -1,0 +1,89 @@
+name: Singmaster search
+on:
+  push:
+    branches: [search]
+permissions:
+  contents: read
+jobs:
+  selftest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - run: python singsearch.py selftest --random 400 --central 200 --lind 4
+
+  lind:
+    needs: selftest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 345
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Runs 40166727006 and 40186682964 covered k <= 3500970 for i = 8 and k <= 22989519
+          # for i = 9. Both stalled for k between N / (2 phi) and K, which gap_kill now handles.
+          - name: i8-0
+            cmd: python singsearch.py lind --i 8 --kstart 3500971 --job 0 --jobs 2 --workers 4 --dps 300 --minutes 300 --out lind-8-0.json
+          - name: i8-1
+            cmd: python singsearch.py lind --i 8 --kstart 3500971 --job 1 --jobs 2 --workers 4 --dps 300 --minutes 300 --out lind-8-1.json
+          - name: i9-0
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 0 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-0.json
+          - name: i9-1
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 1 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-1.json
+          - name: i9-2
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 2 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-2.json
+          - name: i9-3
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 3 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-3.json
+          - name: i9-4
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 4 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-4.json
+          - name: i9-5
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 5 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-5.json
+          - name: i9-6
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 6 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-6.json
+          - name: i9-7
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 7 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-7.json
+          - name: i9-8
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 8 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-8.json
+          - name: i9-9
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 9 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-9.json
+          - name: i9-10
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 10 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-10.json
+          - name: i9-11
+            cmd: python singsearch.py lind --i 9 --kstart 22989520 --job 11 --jobs 12 --workers 4 --dps 400 --minutes 300 --out lind-9-11.json
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - run: nproc && free -g && ${{ matrix.cmd }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lind-${{ matrix.name }}
+          path: lind-*.json
+
+  merge:
+    needs: [lind]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install gmpy2 mpmath
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+          merge-multiple: true
+      - run: python singsearch.py merge results/*.json --out report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: |
+            report.json
+            results/*.json

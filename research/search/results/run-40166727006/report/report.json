@@ -1,0 +1,57 @@
+{
+ "central": {
+  "contiguous_from": 2,
+  "contiguous_to": 150001,
+  "exact_checks": 12832016,
+  "hits": {},
+  "prime_tests": 3810943382,
+  "primes_used": 44665139635,
+  "values_done": 177436
+ },
+ "lind_7": {
+  "K": 602069,
+  "N": 1576239,
+  "complete": true,
+  "digits": 455237,
+  "hits": [
+   [
+    602069,
+    [
+     1576239
+    ]
+   ],
+   [
+    602070,
+    [
+     1576238
+    ]
+   ]
+  ],
+  "k_contiguous_to": 756142,
+  "kmax": 756142,
+  "lanes_seen": 4,
+  "stride": 4
+ },
+ "lind_8": {
+  "K": 4126647,
+  "N": 10803704,
+  "complete": false,
+  "digits": 3120256,
+  "hits": [],
+  "k_contiguous_to": 3383345,
+  "kmax": 5182642,
+  "lanes_seen": 4,
+  "stride": 4
+ },
+ "lind_9": {
+  "K": 28284464,
+  "N": 74049690,
+  "complete": false,
+  "digits": 21386570,
+  "hits": [],
+  "k_contiguous_to": 22931135,
+  "kmax": 35522333,
+  "lanes_seen": 16,
+  "stride": 16
+ }
+}

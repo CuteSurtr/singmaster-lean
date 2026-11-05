@@ -1,0 +1,83 @@
+{
+ "central": {
+  "contiguous_from": 2,
+  "contiguous_to": 35273,
+  "exact_checks": 225312308,
+  "hits": {},
+  "primes_used": 24104261283,
+  "values_done": 37927
+ },
+ "lind_3": {
+  "K": 272,
+  "N": 714,
+  "complete": true,
+  "digits": 205,
+  "hits": {
+   "272": [
+    714
+   ],
+   "273": [
+    713
+   ]
+  },
+  "k_contiguous_to": 350,
+  "kmax": 350
+ },
+ "lind_4": {
+  "K": 1869,
+  "N": 4895,
+  "complete": true,
+  "digits": 1412,
+  "hits": {
+   "1869": [
+    4895
+   ],
+   "1870": [
+    4894
+   ]
+  },
+  "k_contiguous_to": 2355,
+  "kmax": 2355
+ },
+ "lind_5": {
+  "K": 12815,
+  "N": 33552,
+  "complete": true,
+  "digits": 9688,
+  "hits": {
+   "12815": [
+    33552
+   ],
+   "12816": [
+    33551
+   ]
+  },
+  "k_contiguous_to": 16102,
+  "kmax": 16102
+ },
+ "lind_6": {
+  "K": 87840,
+  "N": 229970,
+  "complete": true,
+  "digits": 66416,
+  "hits": {
+   "87840": [
+    229970
+   ],
+   "87841": [
+    229969
+   ]
+  },
+  "k_contiguous_to": 110324,
+  "kmax": 110324
+ },
+ "lind_7": {
+  "K": 602069,
+  "N": 1576239,
+  "complete": false,
+  "digits": 455237,
+  "hits": {},
+  "k_contiguous_to": 163761,
+  "kmax": 756142
+ }
+}
